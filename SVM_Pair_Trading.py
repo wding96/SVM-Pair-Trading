@@ -155,3 +155,78 @@ for i in Ticker_List:
         
     Stock_Data[i]['Signal'] = Signal_List
     
+## data be normalized
+## scales each feature by its maximum absolute valu3
+max_abs_scaler = preprocessing.MaxAbsScaler()
+
+Model_Dict = {}
+
+## 
+date_time_str = '20190101'
+split_date = datetime.datetime.strptime(date_time_str, '%Y%m%d')
+
+for i in Ticker_List:
+    Stock_Data[i].dropna(inplace=True)
+    
+    X = np.array(Stock_Data[i].drop(['Signal','Returns'],1))
+    X = max_abs_scaler.fit_transform(X)
+    Y = np.array(Stock_Data[i]['Signal'])
+   
+    """
+    split test & train data
+    
+    ## X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.3)
+    X_train = X[X['date'] < split_date]
+    y_train = Y[Y['date'] < split_date]
+    
+    X_test = X[X['date'] > split_date]
+    y_test = Y[Y['date'] > split_date]
+    
+    """
+    
+    """"
+    Cross Validation
+    Citation:  https://scikit-learn.org/stable/modules/cross_validation.html
+                    
+    scoring = {'prec_macro': 'precision_macro',
+               'rec_macro': make_scorer(recall_score, average='macro')}
+    scores = cross_validate(clf, X_train, y_train, scoring=scoring, cv=5, return_train_score=True)
+    
+    sorted(scores.keys())
+    """
+    
+    
+    scores['train_rec_macro']
+    
+    Model_Dict[i] = {} #Model_Dict: dict of dict
+    Model_Dict[i]['X Train'] = X_train #key: X Train, value = X_train
+    Model_Dict[i]['X Test'] = X_test
+    Model_Dict[i]['Y Train'] = y_train
+    Model_Dict[i]['Y Test'] = y_test
+    
+    model = svm.SVC(kernel='rbf',decision_function_shape='ovo')
+    #model = svm.SVC(kernel='linear')
+    #model = svm.SVC(kernel='linear',decision_function_shape='ovo')
+    #model = svm.SVC(kernel='rbf',decision_function_shape='ovo')
+    #model = svm.SVC(kernel='poly')
+    #model = svm.SVC(kernel='poly',decision_function_shape='ovo')
+    #model = svm.SVC(kernel='sigmoid')
+    #model = svm.SVC(kernel='sigmoid',decision_function_shape='ovo')
+    
+    model.fit(Model_Dict[i]['X Train'], Model_Dict[i]['Y Train'])
+    y_pred = model.predict(Model_Dict[i]['X Test'])
+    
+    Model_Dict[i]['Y Prediction'] = y_pred
+    
+    #print("SVM Model Info for Ticker: "+i)
+    
+    #print("Accuracy:",metrics.accuracy_score(Model_Dict[i]['Y Test'], Model_Dict[i]['Y Prediction']))
+    Model_Dict[i]['Accuracy'] = metrics.accuracy_score(Model_Dict[i]['Y Test'], Model_Dict[i]['Y Prediction'])
+    
+    #print("Precision:",metrics.precision_score(Model_Dict[i]['Y Test'], Model_Dict[i]['Y Prediction'],pos_label=str(1),average="macro"))
+    Model_Dict[i]['Precision'] = metrics.precision_score(Model_Dict[i]['Y Test'], Model_Dict[i]['Y Prediction'],pos_label=str(1),average="macro")
+    
+    #print("Recall:",metrics.recall_score(Model_Dict[i]['Y Test'], Model_Dict[i]['Y Prediction'],pos_label=str(1),average="macro"))
+    Model_Dict[i]['Recall'] = metrics.recall_score(Model_Dict[i]['Y Test'], Model_Dict[i]['Y Prediction'],pos_label=str(1),average="macro")
+    
+    #print("#################### \n")
